@@ -1,4 +1,5 @@
 import readGame
+import config
 
 #######################################################
 # These are some Helper functions which you have to use 
@@ -17,14 +18,26 @@ class game:
         	self.gameState = readGame.readGameState(filePath)
                 self.nodesExpanded = 0
 		self.trace = []	
+
+        def __str__(self):
+            """ Print the 7x7 game board """
+            nrows = len(self.gameState)
+            ncols = len(self.gameState[0])
+            board = ""
+            for r in range(nrows):
+                for c in range(ncols):
+                    board += str('{0:2d}'.format(self.gameState[r][c]))
+                board += '\n'
+            return board
 	
 	def is_corner(self, pos):
 		########################################
 		# You have to make changes from here
 		# check for if the new positon is a corner or not
 		# return true if the position is a corner
-		return False	
-	
+                if self.gameState[pos[0]][pos[1]] == -1:
+                    return True
+                return False
 	
 	def getNextPosition(self, oldPos, direction):
 		#########################################
@@ -32,8 +45,13 @@ class game:
 		# See DIRECTION dictionary in config.py and add
 		# this to oldPos to get new position of the peg if moved
 		# in given direction , you can remove next line
-		return oldPos 
-	
+                """
+                    The new position is two moves in the specified direction,
+                    since the peg jumps over another peg on the baord. Note
+                    that the new position returned may not be a valid one.
+                """
+                return (oldPos[0] + 2 * config.DIRECTION[direction][0],
+                        oldPos[1] + 2 * config.DIRECTION[direction][1])
 	
 	def is_validMove(self, oldPos, direction):
 		#########################################
@@ -51,8 +69,37 @@ class game:
 		# if new move is already occupied
 		# or new move is outside peg Board
 		# Remove next line according to your convenience
+
+                """ Invalid if there is no peg at the old position """
+                if self.gameState[oldPos[0]][oldPos[1]] != 1:
+                    return False
+
+                """ Invalid if there is already a peg in the new position """
+                if self.gameState[newPos[0]][newPos[1]] == 1:
+                    return False
+
+                """ Invalid if there is no peg to jump over """
+                midPos = (oldPos[0] + config.DIRECTION[direction][0],
+                          oldPos[1] + config.DIRECTION[direction][1])
+                if self.gameState[midPos[0]][midPos[1]] != 1:
+                    return False
+
+                nrows = len(self.gameState)
+                ncols = len(self.gameState[0])
+
+                """ Invalid if the old position is off the board """
+                if oldPos[0] >= nrows or oldPos[1] >= ncols \
+                   or oldPos[0] < 0 or oldPos[1] < 0:
+                    return False
+
+                """ Invalid if the new position is off the board """
+                if newPos[0] >= nrows or newPos[1] >= ncols \
+                   or newPos[0] < 0 or newPos[1] < 0:
+                    return False
+
 		return True
 	
+        """ NOTE: Modifies self.gameState, self.nodesExpanded """
 	def getNextState(self, oldPos, direction):
 		###############################################
 		# DONT Change Things in here
@@ -68,4 +115,13 @@ class game:
 		# eg: remove crossed over pegs by replacing it's
 		# position in gameState by 0
 		# and updating new peg position as 1
-		return self.gameState	
+
+                newPos = self.getNextPosition(oldPos, direction)
+                midPos = (oldPos[0] + config.DIRECTION[direction][0],
+                          oldPos[1] + config.DIRECTION[direction][1])
+
+                self.gameState[oldPos[0]][oldPos[1]] = 0 # move old peg
+                self.gameState[newPos[0]][newPos[1]] = 1 # to new pos, and
+                self.gameState[midPos[0]][midPos[1]] = 0 # delete mid pig
+
+		return self.gameState
