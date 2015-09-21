@@ -1,6 +1,6 @@
 import pegSolitaireUtils
 import config
-from helpers import a_star_search, heuristic1
+from helpers import a_star_search, heuristic1, heuristic2
 
 def ItrDeepSearch(pegSolitaireObject):
 	#################################################
@@ -68,4 +68,4 @@ def aStarTwo(pegSolitaireObject):
         # SEE example in the PDF to see what to return
         #
         #################################################
-        a_star_search(pegSolitaireObject, heuristic1)
+        a_star_search(pegSolitaireObject, heuristic2)

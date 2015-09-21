@@ -36,12 +36,12 @@ def get_next_valid_node(node, pos, dir):
         If there is no valid move, return None, None.
     """
 
-    assert node[pos[0]][pos[1]] == 1
+    #assert node[pos[0]][pos[1]] == 1
 
     nrows = len(node)
     ncols = len(node[0])
-    assert pos[0] >= 0 and pos[0] < nrows
-    assert pos[1] >= 0 and pos[1] < ncols
+    #assert pos[0] >= 0 and pos[0] < nrows
+    #assert pos[1] >= 0 and pos[1] < ncols
     
     newpos = (pos[0] + 2 * config.DIRECTION[dir][0],
               pos[1] + 2 * config.DIRECTION[dir][1])
@@ -94,7 +94,7 @@ def heuristic1(node):
     """
         Relax the problem as follows: allow each peg to
         be simply removed from the board. Then the heuristic
-        is the number of pegs on the board.
+        is the number of pegs on the board minus 1.
 
         This is admissable, since reaching the goal
         will require moving pegs, and not simply taking
@@ -114,7 +114,34 @@ def heuristic1(node):
         for c in range(ncols):
             if node[r][c] == 1:
                 h += 1
-    return h
+    return h - 1
+
+def heuristic2(node):
+    """
+        Relax the problem as follows: allow each peg to
+        jump two steps, regardless of whether there is
+        a peg in between. Then the heuristic is half the
+        sum of Manhattan distances of each peg from the
+        center of the board.
+
+        This is admissable, since reaching the goal will
+        require pegs jumping over other pegs; the heuristic
+        will always *underestimate* the actual cost to
+        the goal.
+
+        TODO: This is also consistent.
+    """
+    h = 0
+    nrows = len(node)
+    ncols = len(node[0])
+    rcenter = nrows/2
+    ccenter = ncols/2
+    for r in range(nrows):
+        for c in range(ncols):
+            if node[r][c] == 1:
+                manhattan_dist = abs(r - rcenter) + abs(c - ccenter)
+                h += manhattan_dist
+    return h/2
 
 def is_valid_trace(start_state, trace):
     """
@@ -206,7 +233,8 @@ def a_star_search(pegSolitaireObject, heuristic_fn):
                               was found to have a shorter path
                               through another expanded node.
                     """
-                    assert child not in expanded
+                    #assert child not in expanded
+
                     #print 'Child', step, path_cost[child], path_cost[node]
                     #print_node(child)
 
@@ -236,4 +264,4 @@ def a_star_search(pegSolitaireObject, heuristic_fn):
     #print_node(node)
 
     pegSolitaireObject.trace = pegSolitaireObject.trace[::-1]
-    assert is_valid_trace(start_state, pegSolitaireObject.trace) 
+    #assert is_valid_trace(start_state, pegSolitaireObject.trace) 
