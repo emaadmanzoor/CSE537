@@ -29,8 +29,8 @@ def get_next_valid_node(node, pos, dir):
         Return a node by moving the peg at
         position pos on the board defined by node
         in the direction specified by dir.
-        
-        Also returns the peg moved as the tuple:
+
+        Also returns the move as the tuple:
             ((dest_row, dest_col),
              (source_row, source_col))
 
@@ -43,7 +43,7 @@ def get_next_valid_node(node, pos, dir):
     ncols = len(node[0])
     #assert pos[0] >= 0 and pos[0] < nrows
     #assert pos[1] >= 0 and pos[1] < ncols
-    
+
     newpos = (pos[0] + 2 * config.DIRECTION[dir][0],
               pos[1] + 2 * config.DIRECTION[dir][1])
 
@@ -51,24 +51,24 @@ def get_next_valid_node(node, pos, dir):
     if newpos[0] < 0 or newpos[1] < 0 or \
        newpos[0] >= nrows or newpos[1] >= ncols:
         return None, None
-    
+
     # is the target location already occupied, or a corner?
     if node[newpos[0]][newpos[1]] != 0:
         return None, None
 
     midpos = (pos[0] + config.DIRECTION[dir][0],
               pos[1] + config.DIRECTION[dir][1])
-    
+
     # is there a peg to jump over?
     if node[midpos[0]][midpos[1]] != 1:
         return None, None
-    
+
     # create the new node
     newnode = list([list(l[:]) for l in node])
     newnode[pos[0]][pos[1]] = 0 # delete old peg
     newnode[newpos[0]][newpos[1]] = 1 # create new peg
     newnode[midpos[0]][midpos[1]] = 0 # delete mid peg
-    
+
     return tuple([tuple(n) for n in newnode]), \
            ((newpos[0], newpos[1]), (pos[0], pos[1]))
 
@@ -212,7 +212,7 @@ def is_valid_trace(start_state, trace):
 
         board[r1][c1] = 0
         board[rmid][cmid] = 0
-        board[r2][c2] = 1 
+        board[r2][c2] = 1
 
     board = tuple([tuple(l[:]) for l in board])
     return board == GOAL_NODE
@@ -297,7 +297,7 @@ def a_star_search(pegSolitaireObject, heuristic_fn):
     pegSolitaireObject.trace = pegSolitaireObject.trace[::-1]
 
     # verify if the trace was valid
-    #assert is_valid_trace(start_state, pegSolitaireObject.trace) 
+    #assert is_valid_trace(start_state, pegSolitaireObject.trace)
 
 """ Modifies pegSolitaireObject """
 def iterative_deepening_search(pegSolitaireObject, max_depth):

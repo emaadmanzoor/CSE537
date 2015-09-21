@@ -38,15 +38,15 @@ class TestGame(unittest.TestCase):
         print '(4,3) N'
         newState = self.game.getNextState((4,3), 'N')
         print self.game
-        
+
         print '(2,2) E'
         newState = self.game.getNextState((2,2), 'E')
         print self.game
-        
+
         print '(2,5) W'
         newState = self.game.getNextState((2,5), 'W')
         print self.game
-        
+
         print '(1,3) S'
         newState = self.game.getNextState((1,3), 'S')
         print self.game

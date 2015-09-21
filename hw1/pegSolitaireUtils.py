@@ -19,17 +19,6 @@ class game:
                 self.nodesExpanded = 0
 		self.trace = []	
 
-        def __str__(self):
-            """ Print the 7x7 game board """
-            nrows = len(self.gameState)
-            ncols = len(self.gameState[0])
-            board = ""
-            for r in range(nrows):
-                for c in range(ncols):
-                    board += str('{0:2d}'.format(self.gameState[r][c]))
-                board += '\n'
-            return board
-	
 	def is_corner(self, pos):
 		########################################
 		# You have to make changes from here
