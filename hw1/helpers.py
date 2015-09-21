@@ -3,6 +3,7 @@
 from collections import defaultdict
 import config
 from heapq import *
+import sys
 
 GOAL_NODE = tuple([tuple([-1, -1, 0, 0, 0, -1, -1]),
                    tuple([-1, -1, 0, 0, 0, -1, -1]),
@@ -105,7 +106,7 @@ def heuristic1(node):
         remove one peg from the board, and the path cost
         for each move is 1. Moving from a node n to
         its successor n', along a path costing c(n, a, n')
-        will result in h(n') = h(n) + c(n, a, n').
+        will result in h(n) = h(n') + c(n, a, n').
     """
     h = 0
     nrows = len(node)
@@ -119,17 +120,48 @@ def heuristic1(node):
 def heuristic2(node):
     """
         Relax the problem as follows: allow each peg to
-        jump two steps, regardless of whether there is
-        a peg in between. Then the heuristic is half the
-        sum of Manhattan distances of each peg from the
-        center of the board.
+        jump two steps in any direction, regardless of
+        whether there exists a peg to jump over. Then the
+        heuristic is half the sum of Manhattan distances of
+        each peg from the center of the board.
 
         This is admissable, since reaching the goal will
-        require pegs jumping over other pegs; the heuristic
+        require pegs to be jumped over; the heuristic
         will always *underestimate* the actual cost to
         the goal.
 
-        TODO: This is also consistent.
+        This may not be consistent. Let n be a search
+        node and n' be its successor, reached after c(n, a, n')
+        steps. Let h(n) be the heuristic value at node n,
+        and h(n') be that at node n'.
+
+        Let h(n') - h(n) = delta be the change in heuristic
+        value in a single step.
+
+        In each step, one peg is moved in some direction.
+        This causes the sum of Manhattan distances of all
+        pegs to decrease at most by 2.
+
+            -2 <= delta1
+        =>  -1 <= delta1/2
+
+        Additionally, one peg is removed from the board,
+        which can cause the sum of Manhattan distances of all
+        pegs to decrease at most by 2 (in a solvable board, the
+        furthest peg that can be jumped over cannot be adjacent
+        to a corner or the board's edge, and lies at a Manhattan
+        distance of at most 2 from the center).
+
+            -2 <= delta2
+        =>  -1 <= delta2/2
+
+        The overall change in the heuristic function from
+        node n to n' after c(n, a, n') steps is thus:
+
+            h(n') - h(n) = delta1/2 + delta2/2 >= -2 * c(n, a, n')
+        =>  h(n) <= h(n') + 2 * c(n, a, n')
+
+        This doesn't satisfy the consistency criterion.
     """
     h = 0
     nrows = len(node)
@@ -189,9 +221,9 @@ def is_valid_trace(start_state, trace):
 def a_star_search(pegSolitaireObject, heuristic_fn):
     # initialisation
     expanded = set([])
-    parent = defaultdict(lambda: None)
-    step_trace = defaultdict(lambda: None)
-    path_cost = defaultdict(lambda: 100000)
+    parent = {}
+    step_trace = {}
+    path_cost = defaultdict(lambda: sys.maxint)
     heuristic_cost = defaultdict(lambda: -1)
     fringe = []
 
@@ -200,7 +232,8 @@ def a_star_search(pegSolitaireObject, heuristic_fn):
     path_cost[start_state] = 0
     parent[start_state] = start_state
     
-    # store search nodes as (f(n) = g(n) + h(n), n) tuples
+    # store search nodes as (f(n) = g(n) + h(n), n) tuples,
+    # so that f(n) is used as the min-heap key
     start_node = (0, start_state)
 
     # start search (using a min-heap)
@@ -211,7 +244,7 @@ def a_star_search(pegSolitaireObject, heuristic_fn):
         if node == GOAL_NODE:
             expanded.add(node)
             break
-        
+
         # a popped node will turn out to be already expanded
         # only in the case of a board with no solution
 
@@ -233,10 +266,8 @@ def a_star_search(pegSolitaireObject, heuristic_fn):
                               was found to have a shorter path
                               through another expanded node.
                     """
+                    # test the above comment with an assertion
                     #assert child not in expanded
-
-                    #print 'Child', step, path_cost[child], path_cost[node]
-                    #print_node(child)
 
                     path_cost[child] = path_cost[node] + 1
                     parent[child] = node
@@ -264,4 +295,64 @@ def a_star_search(pegSolitaireObject, heuristic_fn):
     #print_node(node)
 
     pegSolitaireObject.trace = pegSolitaireObject.trace[::-1]
+
+    # verify if the trace was valid
     #assert is_valid_trace(start_state, pegSolitaireObject.trace) 
+
+""" Modifies pegSolitaireObject """
+def iterative_deepening_search(pegSolitaireObject, max_depth):
+    # start a depth limited search for each depth limit
+    # - a depth limit of 0 will only run a goal test on the root node,
+    #   but not expand it
+    # - a depth limit of 1 will expand only the root node
+    goal_found = False
+    for depth_limit in range(max_depth+1):
+        # initialisation
+        parent = {}
+        step_trace = {}
+        depth = {}
+
+        # make a deep copy of the game board (tuple of tuples) as the initial state
+        start_state = tuple([tuple(l[:]) for l in pegSolitaireObject.gameState])
+        depth[start_state] = 0
+        parent[start_state] = start_state
+
+        #print 'dls with depth =', depth_limit
+        fringe = [start_state]
+        while len(fringe) > 0:
+            node = fringe.pop()
+
+            if node == GOAL_NODE:
+                goal_found = True
+                break
+
+            if depth[node] + 1 > depth_limit:
+                # depth limit reached, don't expand
+                break
+
+            for child, step in zip(*expand_node(node)):
+                pegSolitaireObject.nodesExpanded += 1
+                depth[child] = depth[node] + 1
+                parent[child] = node
+                step_trace[child] = step
+                fringe.append(child)
+
+    # if the solution was not found
+    if not goal_found:
+        pegSolitaireObject.trace = ['GOAL NOT FOUND']
+        return
+
+    # compute the trace if a solution was found
+    node = GOAL_NODE
+    while parent[node] != node:
+        pegSolitaireObject.trace.extend(step_trace[node])
+        #print_node(node)
+        #print 'Step:', step_trace[node][::-1]
+        #print
+        node = parent[node]
+    #print_node(node)
+
+    pegSolitaireObject.trace = pegSolitaireObject.trace[::-1]
+
+    # verify if the trace was valid
+    #assert is_valid_trace(start_state, pegSolitaireObject.trace)

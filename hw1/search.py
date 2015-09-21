@@ -1,6 +1,7 @@
 import pegSolitaireUtils
 import config
 from helpers import a_star_search, heuristic1, heuristic2
+from helpers import iterative_deepening_search
 
 def ItrDeepSearch(pegSolitaireObject):
 	#################################################
@@ -22,7 +23,14 @@ def ItrDeepSearch(pegSolitaireObject):
 	# SEE example in the PDF to see what to save
 	#
 	#################################################
-	return True
+        number_of_pegs = 0
+        nrows = len(pegSolitaireObject.gameState)
+        ncols = len(pegSolitaireObject.gameState[0])
+        for r in range(nrows):
+            for c in range(ncols):
+                if pegSolitaireObject.gameState[r][c] == 1:
+                    number_of_pegs += 1
+	iterative_deepening_search(pegSolitaireObject, number_of_pegs)
 
 def aStarOne(pegSolitaireObject):
 	#################################################
