@@ -48,6 +48,8 @@ def convert2CNF(board, height, width, constraints, variables, output, filepath):
                          if board[neighbor] < 0]
         n = len(neighbor_vars)
 
+        assert k >= 0
+
         """
         Exactly k out of n neighboring variables is true
         
@@ -89,10 +91,11 @@ def convert2CNF(board, height, width, constraints, variables, output, filepath):
             clauses.update([tuple([-variables[v]]) for v in neighbor_vars])
         elif k == n: # all neighbors have a mine
             clauses.update([tuple([variables[v]]) for v in neighbor_vars])
-        elif k > n: # invalid
-            print 'WARNING: Invalid board at:', constraint, 'in', filepath.strip()
-            print 'k =', k, 'mines expected, but only n =', n, 'variables'
-            continue
+        elif k > n: # invalid, should be UNSAT
+            #print 'WARNING: Invalid board at:', constraint, 'in', filepath.strip()
+            #print 'k =', k, 'mines expected, but only n =', n, 'variables'
+            clauses.update([tuple([-variables[v]]) for v in neighbor_vars])
+            clauses.update([tuple([variables[v]]) for v in neighbor_vars])
         else:
             A = [tuple([-variables[v] for v in s]) # size-(k+1) clause
                  for s in itertools.combinations(neighbor_vars, k + 1)]
@@ -104,7 +107,7 @@ def convert2CNF(board, height, width, constraints, variables, output, filepath):
         #print [variables[v] for v in neighbor_vars]
         #print clauses
 
-    clauses = sorted(list(clauses), key=lambda c: len(c))
+    clauses = sorted(list(clauses), key=lambda c: (len(c), c))
 
     with open(output, 'w') as fout:
         fout.write('c ' + filepath.strip() + '\n')

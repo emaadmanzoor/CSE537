@@ -1,2 +1,6 @@
 #!/usr/bin/env bash
-for testfile in tests/*.txt; do python convert2CNF.py $testfile $testfile.out; done
+for testfile in tests/*.txt;
+do
+  python convert2CNF.py $testfile $testfile.cnf;
+  minisat $testfile.cnf $testfile.sat
+done
