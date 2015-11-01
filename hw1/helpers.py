@@ -130,7 +130,7 @@ def heuristic2(node):
         will always *underestimate* the actual cost to
         the goal.
 
-        This may not be consistent. Let n be a search
+        This is consistent. Let n be a search
         node and n' be its successor, reached after c(n, a, n')
         steps. Let h(n) be the heuristic value at node n,
         and h(n') be that at node n'.
@@ -145,23 +145,13 @@ def heuristic2(node):
             -2 <= delta1
         =>  -1 <= delta1/2
 
-        Additionally, one peg is removed from the board,
-        which can cause the sum of Manhattan distances of all
-        pegs to decrease at most by 2 (in a solvable board, the
-        furthest peg that can be jumped over cannot be adjacent
-        to a corner or the board's edge, and lies at a Manhattan
-        distance of at most 2 from the center).
-
-            -2 <= delta2
-        =>  -1 <= delta2/2
-
         The overall change in the heuristic function from
         node n to n' after c(n, a, n') steps is thus:
 
-            h(n') - h(n) = delta1/2 + delta2/2 >= -2 * c(n, a, n')
-        =>  h(n) <= h(n') + 2 * c(n, a, n')
+            h(n') - h(n) = delta1/2 >= -1 * c(n, a, n')
+        =>  h(n) <= h(n') + c(n, a, n')
 
-        This doesn't satisfy the consistency criterion.
+        This satisfies the consistency condition.
     """
     h = 0
     nrows = len(node)
