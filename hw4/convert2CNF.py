@@ -90,7 +90,7 @@ def convert2CNF(board, height, width, constraints, variables, output, filepath):
         elif k == n: # all neighbors have a mine
             clauses.update([tuple([variables[v]]) for v in neighbor_vars])
         elif k > n: # invalid
-            print 'WARNING: Invalid board at:', constraint
+            print 'WARNING: Invalid board at:', constraint, 'in', filepath.strip()
             print 'k =', k, 'mines expected, but only n =', n, 'variables'
             continue
         else:
