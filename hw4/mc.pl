@@ -1,7 +1,9 @@
 % Missionaries and cannibals
-:- import append/3, select/3 from basics.
+:- import append/3, select/3, length/2, member/2 from basics.
+:- import format/2 from format.
 :- export is_perm/2, is_equivalent/2, transition/2.
 :- export valid_state/1, outnumbered/1.
+:- export find_solution/0, showlist/1, last/2.
 
 %% State space definition
 
@@ -70,10 +72,80 @@ is_perm(L, [H|T]) :-
   append(V, U, W),     %  V + U = W, and
   is_perm(W, T).       %  W is a permutation of T
 
+last([X],X).
+last([_|L],X) :- last(L,X).
+
 %% end helpers
 
-%% Search algorithm
+%% Search algorithm (BFS)
+%% Based on this tutorial: http://www.comp.leeds.ac.uk/brandon/vle/prolog_intro/prolog-intro-ex.pdf
+%% (adapted for XSB Prolog)
 
-% TODO
+find_solution :-
+          initial_state( Initial ),
+          goal_state( Goal ),
+          solution( [[Initial]], Goal, StateList ),
+          length( StateList, Len ),
+          Transitions is Len -1,
+          format( '~n** Solution path (each line is a boat move) (length = ~d) **', [Transitions] ), nl,
+          showlist( StateList ).
+
+%% Base case for finding solution.
+%% Find a statelist whose last state is the goal or
+%% or some state equivalent to the goal.
+solution( StateLists, Goal, StateList ) :-
+          member( StateList, StateLists ),
+          last( StateList, Last ),
+          is_equivalent( Last, Goal ).
+          %report_progress( StateLists, final ).
+
+%% Recursive rule that looks for a solution by extending
+%% each of the generated state lists to add a further state.
+solution( StateLists, Goal, StateList ) :-
+          %report_progress( StateLists, ongoing ),
+          extend( StateLists, Extensions ),
+          solution( Extensions, Goal, StateList ).
+
+%% Extend each statelist in a set of possible state lists.
+%% If loopcheck(on) will not extend to any state previously reached
+%% in any of the state lists, to avoid loops.
+extend( StateLists, ExtendedStateLists ) :-
+     setof( ExtendedStateList,
+            StateList^Last^Next^( member( StateList, StateLists ),
+                                  last( StateList, Last ),
+                                  transition( Last, Next ),
+                                  valid_state( Next ),
+                                  no_loop_or_loopcheck_off( Next, StateLists ),
+                                  append( StateList, [Next], ExtendedStateList )
+                                ),
+             ExtendedStateLists
+           ).
+
+no_loop_or_loopcheck_off( _, _) :- loopcheck(off), !.
+no_loop_or_loopcheck_off( Next, StateLists ) :-
+                        \+( already_reached( Next, StateLists ) ).
+
+%% Check whether State (or some equivalent state) has already been
+%% reached in any state list in StateLists.
+already_reached( State,  StateLists ) :-
+           member( StateList, StateLists ),
+           member( State1, StateList ),
+           is_equivalent( State, State1 ).
+
+%% Print out list, each element on a separate line.
+showlist([]).
+showlist([H | T]) :- write( H ), nl, showlist( T ).
+
+%% Report progress after each cycle of the planner:
+report_progress( StateLists, Status ) :-
+      length( StateLists, NS ),
+      member( L , StateLists ), length( L, N ),
+      Nminus1 is N - 1,
+      write( 'Found '), write( NS ),
+      write( ' states reachable in path length ' ), write(Nminus1), nl,
+      ( Status = ongoing -> (write( 'Computing extensions of length : ' ), write(N), nl) ; true ).
 
 %% end search
+
+loopcheck(on).
+:- find_solution.
